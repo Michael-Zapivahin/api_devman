@@ -9,7 +9,11 @@ from dotenv import load_dotenv
 
 
 def send_message(bot_token, chat_id, message):
-    message_text = message
+    if not message['is_negative']:
+        message_text = 'Your work completed successfully.'
+    else:
+        message_text = 'The tutor returned your work for revision.'
+    message_text += f' link to work {message["lesson_url"]}'
     bot = telebot.TeleBot(bot_token)
     bot.send_message(chat_id, message_text)
 
