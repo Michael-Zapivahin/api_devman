@@ -50,8 +50,9 @@ def long_polling(devman_token, bot_token, chat_id):
             continue
 
         works_status = response.json()
-        timestamp_to_request = works_status['last_attempt_timestamp']
-        send_message(bot_token, chat_id, works_status)
+        if works_status['status'] == 'found':
+            timestamp_to_request = works_status['last_attempt_timestamp']
+            send_message(bot_token, chat_id, works_status)
 
 
 def main():
