@@ -11,9 +11,6 @@ from requests.exceptions import HTTPError, ConnectionError
 
 def send_message(bot_token, chat_id, message):
 
-    if not message['status'] == 'found':
-        return
-
     lesson_url = ''
     message_text = 'The tutor returned your work for revision.'
     for attempt in message['new_attempts']:
