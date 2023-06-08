@@ -2,23 +2,33 @@ import time
 
 import requests
 import os
+import telebot
 
 from datetime import datetime
 from dotenv import load_dotenv
 
 
-def long_polling(token, timestamp):
+def send_message(bot_token, chat_id, message):
+    message_text = message
+    bot = telebot.TeleBot(bot_token)
+    bot.send_message(chat_id, message_text)
+
+
+def long_polling(devman_token, bot_token, chat_id):
+
+    timestamp = datetime.timestamp(datetime.now())
+    last_attempt_timestamp = f'{int(timestamp)}'
+
     url = 'https://dvmn.org/api/long_polling/'
-    last_attempt_timestamp = timestamp
     headers = {
-        'Authorization': token,
+        'Authorization': devman_token,
     }
     while True:
         payload = {
             'last_attempt_timestamp': last_attempt_timestamp,
         }
         try:
-            response = requests.get(url, headers=headers, timeout=5, params=payload)
+            response = requests.get(url, headers=headers, timeout=60, params=payload)
         except requests.exceptions.ReadTimeout:
             continue
         except requests.exceptions.HTTPError as http_error:
@@ -33,6 +43,7 @@ def long_polling(token, timestamp):
         response.raise_for_status()
         works_status = response.json()
         last_attempt_timestamp = works_status['last_attempt_timestamp']
+        send_message(bot_token, chat_id, works_status)
 
 
 def my_works(dvmn_token):
@@ -47,9 +58,10 @@ def my_works(dvmn_token):
 
 def main():
     load_dotenv()
-    dvmn_token = os.getenv('DVMN_TOKEN', default='DEMO_KEY')
-    timestamp = datetime.timestamp(datetime.now())
-    long_polling(dvmn_token, f'{int(timestamp)}')
+    dvmn_token = os.environ['DVMN_TOKEN']
+    bot_token = os.environ['TG_BOT_TOKEN']
+    chat_id = os.environ['TG_CHAT_ID']
+    long_polling(dvmn_token, bot_token, chat_id)
 
 
 if __name__ == '__main__':
