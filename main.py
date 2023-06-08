@@ -9,12 +9,19 @@ from dotenv import load_dotenv
 
 
 def send_message(bot_token, chat_id, message):
-    if not message['is_negative']:
-        message_text = 'Your work completed successfully.'
-    else:
-        message_text = 'The tutor returned your work for revision.'
-    message_text += f' link to work {message["lesson_url"]}'
     bot = telebot.TeleBot(bot_token)
+    try:
+        if not message['is_negative']:
+            message_text = 'Your work completed successfully.'
+        else:
+            message_text = 'The tutor returned your work for revision.'
+        message_text += f' link to work {message["lesson_url"]}'
+    except KeyError as error:
+        message_text = f'KeyError {error}'
+        bot.send_message(chat_id, message_text)
+        message_text = f'message {message}'
+        bot.send_message(chat_id, message_text)
+
     bot.send_message(chat_id, message_text)
 
 
@@ -65,6 +72,7 @@ def main():
     dvmn_token = os.environ['DVMN_TOKEN']
     bot_token = os.environ['TG_BOT_TOKEN']
     chat_id = os.environ['TG_CHAT_ID']
+    send_message(bot_token, chat_id, my_works(dvmn_token))
     long_polling(dvmn_token, bot_token, chat_id)
 
 
