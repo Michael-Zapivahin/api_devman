@@ -65,7 +65,6 @@ def long_polling(devman_token, bot_token, chat_id):
             response = requests.get(url, headers=headers, timeout=60, params=payload)
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
-            logger.info('The waiting time for a response from the server has been exceeded')
             continue
         except HTTPError or ConnectionError as error:
             logger.error(f'Network error: {error}')
