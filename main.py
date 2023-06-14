@@ -68,8 +68,12 @@ def long_polling(devman_token, bot_token, chat_id):
             logger.info('The waiting time for a response from the server has been exceeded')
             continue
         except HTTPError or ConnectionError as error:
-            logger.error(error)
+            logger.error(f'Network error: {error}')
             time.sleep(10)
+            continue
+        except Exception as error:
+            logger.exception(f'The bot stopped with error: {error}')
+            time.sleep(20)
             continue
 
         works_status = response.json()
