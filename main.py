@@ -10,6 +10,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from requests.exceptions import HTTPError, ConnectionError
 
+logger = logging.getLogger(__name__)
+
 
 class TelegramLogsHandler(logging.Handler):
     def __init__(self, bot, chat_id):
@@ -36,22 +38,10 @@ def get_message_text(message):
     return message_text
 
 
-def long_polling(devman_token, bot_token, chat_id):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    bot = telebot.TeleBot(bot_token)
-    timestamp_to_request = int(datetime.timestamp(datetime.now()))
-
-    file_handler = RotatingFileHandler('bot.log', maxBytes=200000, backupCount=2)
-    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-    logger.addHandler(file_handler)
-
-    telegram_handler = TelegramLogsHandler(bot, chat_id)
-    telegram_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
-    logger.addHandler(telegram_handler)
-
+def long_polling(devman_token, bot, chat_id):
     logger.info('The bot started.')
 
+    timestamp_to_request = int(datetime.timestamp(datetime.now()))
     url = 'https://dvmn.org/api/long_polling/'
 
     headers = {
@@ -86,7 +76,21 @@ def main():
     dvmn_token = os.environ['DVMN_TOKEN']
     bot_token = os.environ['TG_BOT_TOKEN']
     chat_id = os.environ['TG_CHAT_ID']
-    long_polling(dvmn_token, bot_token, chat_id)
+
+    bot = telebot.TeleBot(bot_token)
+
+    file_handler = RotatingFileHandler('bot.log', maxBytes=200000, backupCount=2)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(file_handler)
+
+    telegram_handler = TelegramLogsHandler(bot, chat_id)
+    telegram_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+    logger.addHandler(telegram_handler)
+
+    logging.basicConfig(level=logging.ERROR)
+    logger.setLevel(logging.DEBUG)
+
+    long_polling(dvmn_token, bot, chat_id)
 
 
 if __name__ == '__main__':
