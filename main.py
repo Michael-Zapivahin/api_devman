@@ -69,7 +69,7 @@ def long_polling(devman_token, bot_token, chat_id):
             continue
         except HTTPError or ConnectionError as error:
             logger.error(f'Network error: {error}')
-            time.sleep(10)
+            time.sleep(120)
             continue
         except Exception as error:
             logger.exception(f'The bot stopped with error: {error}')
