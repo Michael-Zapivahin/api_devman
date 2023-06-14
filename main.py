@@ -3,13 +3,26 @@ import time
 import requests
 import os
 import telebot
+import logging
 
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from dotenv import load_dotenv
 from requests.exceptions import HTTPError, ConnectionError
 
 
-def send_message(bot_token, chat_id, message):
+class TelegramLogsHandler(logging.Handler):
+    def __init__(self, bot, chat_id):
+        super().__init__()
+        self.bot = bot
+        self.chat_id = chat_id
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.bot.send_message(chat_id=self.chat_id, text=log_entry)
+
+
+def get_message_text(message):
 
     lesson_url = ''
     message_text = 'The tutor returned your work for revision.'
@@ -20,13 +33,25 @@ def send_message(bot_token, chat_id, message):
             break
 
     message_text += f'  {lesson_url}'
-    bot = telebot.TeleBot(bot_token)
-    bot.send_message(chat_id, message_text)
+    return message_text
 
 
 def long_polling(devman_token, bot_token, chat_id):
-
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    bot = telebot.TeleBot(bot_token)
     timestamp_to_request = int(datetime.timestamp(datetime.now()))
+
+    file_handler = RotatingFileHandler('bot.log', maxBytes=200000, backupCount=2)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(file_handler)
+
+    telegram_handler = TelegramLogsHandler(bot, chat_id)
+    telegram_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+    logger.addHandler(telegram_handler)
+
+    logger.info('The bot started.')
+
     url = 'https://dvmn.org/api/long_polling/'
 
     headers = {
@@ -40,16 +65,17 @@ def long_polling(devman_token, bot_token, chat_id):
             response = requests.get(url, headers=headers, timeout=60, params=payload)
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
+            logger.info('The waiting time for a response from the server has been exceeded')
             continue
         except HTTPError or ConnectionError as error:
-            print(error)
+            logger.error(error)
             time.sleep(10)
             continue
 
         works_status = response.json()
         if works_status['status'] == 'found':
             timestamp_to_request = works_status['last_attempt_timestamp']
-            send_message(bot_token, chat_id, works_status)
+            bot.send_message(chat_id, get_message_text(works_status))
 
 
 def main():
