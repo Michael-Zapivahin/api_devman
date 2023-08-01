@@ -7,11 +7,16 @@
 Python3 should already be installed. 
 Use pip or pip3, if there is a conflict with Python2) to install dependencies:
 
+- Installed [Docker Desktop](https://www.docker.com/)
+
+#### Clone project
+```
+git clone git@github.com:rkinwork/devman-bot.git
+```
+
 ```
 pip install -r requirements.txt
 ```
-
-
 
 ## Program uses an environment variable
 
@@ -28,6 +33,41 @@ pip install -r requirements.txt
 
 ```
 python main.py
+```
+
+## deploy on server
+#### Make file  /etc/systemd/system/api_devman.service
+```service
+ [Service]
+ ExecStart=/opt/api_devman/env/bin/python3 /opt/api_devman/main.py
+ Restart=always
+
+ [Install]
+ WantedBy=multi-user.target
+```
+Name of the service `api_devman`
+
+You can easily run these commands
+```bash
+systemctl enable api_devman
+systemctl start api_devman
+systemctl stop api_devman
+systemctl restart api_devman
+```
+
+After change the configuration
+```bash
+systemctl daemon-reload
+```
+## Create and start a container
+
+```bash
+docker build --tag api_devman .
+```
+#### start the container
+
+```bash
+docker run -d api_devman
 ```
 
 
